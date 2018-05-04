@@ -11,5 +11,4 @@
 ``` docker-ce.x86_64    18.04.0.ce-3.el7.centos    docker-ce-edge```<br/> 
 		- Install a specific version by its fully qualified package name, which is the package name (docker-ce) plus the version string (2nd column) up to the first hyphen, separated by a hyphen (-), for example, docker-ce-18.03.0.ce. <br> ``` $ sudo yum install docker-ce-<VERSION STRING>``` <br/>
 3. Start Docker. <br> ``` $ sudo systemctl start docker```<br/>
-4. Verify that docker is installed correctly by running the hello-world image.
-```$ sudo docker run hello-world ```
+4. Verify that docker is installed correctly by running the hello-world image. <br>```$ sudo docker run hello-world ``` <br/>
