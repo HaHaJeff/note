@@ -97,7 +97,7 @@ f8fbc680bf7c
 cb74fb7e5db7
 ef6c91619b87
 ```
-result:<br> ![avatar](https://github.com/HaHaJeff/note/blob/master/docker/document/serivces/hello.png)<br/>
+result:<br> ![avatar](https://github.com/HaHaJeff/note/blob/master/docker/book/document/serivces/hello.png)<br/>
 
 #Scale the app
 You can scale the app by changing the replicas value in docker-compose.yml, saving the change, and re-running the docker stack deploy command:
