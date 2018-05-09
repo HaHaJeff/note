@@ -59,7 +59,7 @@ VERSION_CODENAME=xenial
 UBUNTU_CODENAME=xenial
 root@4e73c08383a3:/# 
 ```
-```docker run```就是运行容器的命令：
+docker run就是运行容器的命令：
 - i：表示交互操作；
 - t：表示终端；
 - --rm：说明容器推出之后随之将其删除。
@@ -73,11 +73,13 @@ ubuntu                    16.04               0b1edfbffd27        11 days ago   
 ubuntu                    latest              452a96d81c30        11 days ago         79.6MB
 hello-world               latest              e38bc07ac18e        3 weeks ago         1.85kB
 ```
-列表包含了```仓库名```，```标签```，```镜像ID```，```创建时间```以及```占用空间```。
+列表包含了 ```仓库名```，```标签```，```镜像ID```，```创建时间```以及```占用空间```。
 
 ## 镜像体积
 docker image ls中的SIZE和DockerHub上看到的镜像大小不同。比如，ubuntu:16.04镜像大小，在这里是127MB，但是在DockerHub显示的确实50MB。这是因为DockerHub中显示的体积是压缩后的体积。
+
 **需要注意的是：docker image ls列表中的size并非是所有镜像体积实际的硬盘资源占用**，由于docker镜像是多层存储结构，并且可以继承，复用，因此，不同镜像可能会因为使用相同的基础镜像，从而拥有共同的层。由于docker使用UnionFS，相同的层只需要保存一份即可，因此，实际镜像硬盘占用空间可能小的多。
+
 ```
 jeff@ubuntu:~$ sudo docker system df
 TYPE                TOTAL               ACTIVE              SIZE                RECLAIMABLE
@@ -86,3 +88,41 @@ Containers          5                   0                   257.1kB             
 Local Volumes       0                   0                   0B                  0B
 Build Cache                                                 0B                  0B
 ```
+
+## 虚悬镜像
+**定义：**仓库名和标签均为```<none>```
+
+## 中间层镜像
+为了加速镜像构建、重复利用资源，Docker会利用中间层镜像。所以在使用一段时间后，可能会看到一些依赖的中间层镜像。默认的```docker image ls```列表中只会显示顶层镜像，如果需要显示包括中间层镜像在内的所有镜像，则需要加```-a```参数。
+```
+$ docker image ls -a
+```
+docker image ls的功能一览：
+```
+Usage:	docker image ls [OPTIONS] [REPOSITORY[:TAG]]
+List images
+Aliases:
+  ls, images, list
+Options:
+  -a, --all             Show all images (default hides intermediate images)
+      --digests         Show digests
+  -f, --filter filter   Filter output based on conditions provided
+      --format string   Pretty-print images using a Go template
+      --no-trunc        Don't truncate output
+  -q, --quiet           Only show numeric IDs
+```
+
+## 删除本地镜像
+如果要删除本地的镜像，可以使用```docker image rm```，其格式为：
+```
+$ docker image rm [选项] <镜像1> [<镜像2> ...]
+```
+## 用ID、镜像名、摘要删除镜像
+其中，```<镜像>```可以是```镜像短ID```、```镜像长ID```、```镜像名```或者```镜像摘要```。
+
+## Untagged和Deleted
+镜像的唯一标识：**其ID和摘要**，而一个镜像可以有多个标签。
+- **Untagged：**取消指定镜像的某个标签；
+- **Deleted：** 删除镜像。
+
+**因此当我们使用删除命令删除镜像时，实际上是在要求删除某个标签的镜像。所有，当删除指定的标签的镜像时，可能还有其他标签指向这个镜像，如果是这种情况，那么```delete```行为就不会发生。**综上，并非所有的docker rmi都会产生删除镜像的行为，有可能仅仅是取消了某个标签而已。
