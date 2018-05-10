@@ -127,3 +127,67 @@ $ docker image rm [选项] <镜像1> [<镜像2> ...]
 
 **因此当我们使用删除命令删除镜像时，实际上是在要求删除某个标签的镜像。所有，当删除指定的标签的镜像时，可能还有其他标签指向这个镜像，如果是这种情况，那么```delete```行为就不会发生。** 综上，并非所有的```docker rmi```都会产生删除镜像的行为，有可能仅仅是取消了某个标签而已。
 
+## 利用commit理解镜像构成
+**Note：不要使用```dockers commit```定制镜像，定制镜像应该使用Dockerfile**
+
+Dockerfile是一个文本文件，其内包含了一条条的指令，每一个指令构建一层，因此每一条指令的内容，**就是描述当前层应该如何构建**
+
+## FROM指定基础镜像
+在Dockerfile中，FROM是必备的指令，并且必须是第一条指令。
+
+**特殊镜像：**scratch，这个镜像是虚拟的概念，并不实际存在，他表示一个空白的镜像。
+
+##RUN执行命令
+- shell格式：```RUN <命令>```，就像直接在命令行中输入的命令一样
+```
+RUN echo `<h1>Hello, Docer!</h1>` > /usr/shar/nginx/html/index.html
+```
+- exec格式：```RUN ["可执行文件"，"参数1"，"参数2"]```，这更像是函数调用中的格式。
+
+**千万不要像写shell脚本一样！**
+```
+FROM debian:jessie
+RUN apt-get update
+RUN apt-get install -y gcc libc6-dev make
+RUN wget -O redis.tar.gz "http://download.redis.io/releases/redis-3.2.5.tar.gz"
+RUN mkdir -p /usr/src/redis
+RUN tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1
+RUN make -C /usr/src/redis
+RUN make -C /usr/src/redis install
+```
+Dockerfile中每一条指令都会建立一层，```RUN```也不例外。每一个```RUN```的行为，相当于建立一层，然后```commit```这一层的修改，构成新的镜像。
+
+**所以正确的写法：**
+```
+FROM debian:jessie
+RUN buildDeps='gcc libc6-dev make' \
+&& apt-get update \
+&& apt-get install -y $buildDeps \
+&& wget -O redis.tar.gz "http://download.redis.io/releases/redis-3.2.5.tar.gz" \
+&& mkdir -p /usr/src/redis \
+&& tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1 \
+&& make -C /usr/src/redis \
+&& make -C /usr/src/redis install \
+&& rm -rf /var/lib/apt/lists/* \
+&& rm redis.tar.gz \
+&& rm -r /usr/src/redis \
+&& apt-get purge -y --auto-remove $buildDeps
+```
+
+## 构建镜像
+在```Dockerfile```文件所在的目录执行：
+```
+docker build [选项] <上下文路径/URL/- >
+例如：
+docker build -t nginx:v3 .
+```
+
+## 构建上下文
+```docker build```命令最后由一个```.```。表示当前目录，**注意```.```表示的是上下文路径**
+### 何为上下文
+```docker build```工作原理：Docker在运行时分为Docker引擎(服务端守护进程)和客户端工具。Docker的引擎提供了一组REST API，被称为**Docjer Remote API**，而如```docker```命令这样的客户端工具，则是通过这组API于Docker引擎交互，从而完成各种功能。因此，虽然表面上我们好像实在本机执行各种```docker```功能，但实际上，一切都是使用的远程调用形式在服务端(Docker引擎)完成。  
+ 
+ 当我们在构建镜像的时候，并非所有定制都会通过```RUN```指令完成，经常会需要将一些本地文件复制进镜像，比如通过```COPY```指令，```ADD```指令等。而```docker build```命令构建镜像，其实并非在本地构建，而是在**服务端**。
+ 
+ **然而如何才能服务端获得本地文件呢？**
+于是**上下文**的概念出现了。当构建的时候，用户会指定构建镜像上下文的路径，```docker build```命令得知这个路径后，会将路径的下的所有内容打包，然后上传给Docker引擎。
