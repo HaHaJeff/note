@@ -59,7 +59,94 @@ ADD、COPY、ENV、EXPOSE、LABEL、USER、WORKDIR、VOLUME、STOPSIGNAL、ONBUI
 
 ## EXPOSE声明端口
 ``` EXPOSE <端口1> [<端口2>...]```。
+```EXPOSE```指令时声明运行时容器提供服务端口，仅仅只是一个声明，在运行时并不会因为这个声明就开启这个端口。
+- 帮助镜像使用者理解这个镜像服务的守护端口，以方便配置映射；
+- 在运行时使用随机端口映射时，也就是```docker run -P```时，会自动随机映射```EXPOSE```指定的端口。
 
 
+## WORKDIR指定工作目录
+格式为```WORKDIR <工作目录路径>```
+使用```WORKDIR```指令可以来指定工作目录，以后各层的当前目录就被改为指定的目录，如该目录不存在，```WORKDIR```会帮你建立该目录。
 
 
+## USER指定当前用户
+格式为```USER <用户名>```
+```USER```和```WORKDIR```相似，都是改变环境状态并影响以后的层。```WORKDIR```是改变工作目录，```USER```则是改变之后层的执行```RUN```，```CMD```以及```ENTRYPOINT```这类命令的身份。
+
+
+# 多阶段构建
+
+## 全部放入一个Dockerfile
+一种方式是将所有的构建过程包含在一个Dockerfile中，包括项目以及其依赖库的编译，测试，打包等流程，这里可能会带来一些问题：
+- ```Dockerfile```特别长，可维护性降低；
+- 镜像层次多，镜像体积较大，部署时间变长；
+- 源代码存在泄露的风险。
+```
+FROM golang:1.9-alpine
+RUN apk --no-cache add git ca-certificates
+WORKDIR /go/src/github.com/go/helloworld/
+COPY app.go .
+RUN go get -d -v github.com/go-sql-driver/mysql \
+&& CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app . \
+&& cp /go/src/github.com/go/helloworld/app /root
+WORKDIR /root/
+CMD ["./app"]
+```
+
+## 分散到多个Dockerfile
+另外一种方式，就是我们事先在一个```Dockerfile```将项目及其依赖编译打包好后，再将其拷贝到运行环境中，这种方式需要编写两个```Dockerfile```和一些编译脚本才能将其两个阶段自动整合起来。
+
+**编写```Dockerfile.build```文件：**
+```
+FROM golang:1.9-alpine
+RUN apk --no-cache add git
+WORKDIR /go/src/github.com/go/helloworld
+COPY app.go .
+RUN go get -d -v github.com/go-sql-driver/mysql \
+&& CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+```
+
+**编写```Dockerfile.copy```文件：**
+```
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY app .
+CMD ["./app"]
+```
+
+**编写```build.sh```文件：**
+```
+#!/bin/sh
+echo Building go/helloworld:build
+docker build -t go/helloworld:build . -f Dockerfile.build
+docker create --name extract go/helloworld:build
+docker cp extract:/go/src/github.com/go/helloworld/app ./app
+docker rm -f extract
+echo Building go/helloworld:2
+docker build --no-cache -t go/helloworld:2 . -f Dockerfile.copy
+rm ./app
+```
+
+## 使用多阶段构建
+```
+FROM golang:1.9-alpine
+RUN apk --no-cache add git
+WORKDIR /go/src/github.com/go/helloworld/
+RUN go get -d -v github.com/go-sql-driver/mysql
+COPY app.go .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=0 /go/src/github.com/go/helloworld/app .
+CMD ["./app"]
+```
+**对比三种不同镜像的构建方式：**
+```
+$ docker image ls
+REPOSITORY TAG IMAGE ID CREATED SIZE
+go/helloworld 3 d6911ed9c846 7 seconds ago 6.47MB
+go/helloworld 2 f7cf3465432c 22 seconds ago 6.47MB
+go/helloworld 1 f55d3e16affc 2 minutes ago 295M
+```
