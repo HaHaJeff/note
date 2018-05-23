@@ -105,3 +105,44 @@ ip_forward  参数为 1。
 当启动 Docker 服务时候，默认会添加一条转发策略到 iptables 的 FORWARD 链上。策略为通过（``` ACCEPT ``` ）还是禁止（ ```DROP ``` ）取决于配置 ```--icc=true```  （缺省值）还是  ```--icc=false```  。当然，如果手动指定  ```--iptables=false```  则不会添加  ```iptables```  规则。
 
 可见，默认情况下，不同容器之间是允许网络互通的。如果为了安全考虑，可以在```/etc/default/docker```  文件中配置  ```DOCKER_OPTS=--icc=false``` 来禁止它。
+
+# 映射容器端口到宿主主机的实现
+默认情况下，容器可以主动访问到外部网络的连接，但是外部网络无法访问到容器。
+## 容器访问外部实现
+容器所有到外部网络的连接，源地址都会被NAT成本地系统的IP地址。这是使用```iptables```的源地址伪装操作实现的。
+
+查看主机的NAT规则
+```
+$ sudo iptables -t nat -nL
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+DOCKER     all  --  0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  172.18.0.0/16        0.0.0.0/0           
+MASQUERADE  all  --  172.17.0.0/16        0.0.0.0/0           
+
+Chain DOCKER (2 references)
+target     prot opt source               destination         
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0 
+```
+其中，上述规则将所有源地址在```172.18.0.0/16```网段，目标地址为其他网段(外部网络)的流量动态伪装为从系统网卡发出。MASQUERADE跟传统SNAT的好处是它能动态从网卡获取地址。
+## 外部访问容器实现
+容器允许外部访问，可以在```docker run```时候通过```-p```或```-P```参数来启用。不管用那种办法，其实是在本地的```iptable```的```nat```表中添加相应的规则。使用```-P```时：
+
+## 配置docker0网桥
+Docker服务默认会创建一个```docker0```网桥(其中有一个```docker0```内部接口)，它在内核层连通了其他的物理或虚拟网卡，这就将所有容器和本地主机都放到同一个物理网络。
+D
+Docker默认指定了```docker0```接口的IP地址和子网掩码，让主机和容器之间可以通过网桥相互通信，它还给出了MTU(接口允许接受的最大传输单元)，通常是1500Bytes，或宿主主机网络路由上支持的默认值。这些值都可以在服务启动的时候进行配置。
+- ```--bip=CIDR```IP地址加掩码格式，例如```192.168.1.5/24```
+- ```--mtu=BYTES```覆盖默认的```Docker mtu```配置
+也可以在配置文件中配置```DOCKER_OPTS```，然后重启服务。
