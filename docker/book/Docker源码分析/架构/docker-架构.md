@@ -1,5 +1,5 @@
 # Docker总架构图
-! [总架构](https://github.com/HaHaJeff/note/blob/master/docker/book/Docker%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%9E%B6%E6%9E%84/%E6%80%BB%E4%BD%93%E6%9E%B6%E6%9E%84.jpg)
+![总架构](https://github.com/HaHaJeff/note/blob/master/docker/book/Docker%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%9E%B6%E6%9E%84/%E6%80%BB%E4%BD%93%E6%9E%B6%E6%9E%84.jpg)
 ## Docker Client
 Docker client是Docker架构中用户和Docker Daemon建立通信的客户端。用户使用的可执行文件为docker，通过docker命令行工具可以发起众多管理container的请求。
 - tcp://host:port
@@ -7,13 +7,13 @@ Docker client是Docker架构中用户和Docker Daemon建立通信的客户端。
 - fd://socketfd
 ## Docker Daemon
 Docker Daemon是Docker架构中一个常驻在后台的系统进程，功能是：接受并处理Docker Client发送的请求。该守护进程在后台启动了一个Server，Server负责接受Docker Client发送的请求；接受请求后，Server通过路由与分发调度，找到相应的Handler来执行请求。
-** Docker Daemon启动所使用的文件也为docker，与Docker Client启动所使用的可执行文件docker相同。在docker命令执行时，通过传入的参数来判别Docker Daemon与Docker Client 。**
+**Docker Daemon启动所使用的文件也为docker，与Docker Client启动所使用的可执行文件docker相同。在docker命令执行时，通过传入的参数来判别Docker Daemon与Docker Client**
 ![Docker Daemon架构](https://github.com/HaHaJeff/note/blob/master/docker/book/Docker%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%9E%B6%E6%9E%84/docker-daemon%E6%9E%B6%E6%9E%84.jpg)
 
 ## Docker Server
 Docker Server在Docker架构中是专门服务于Docker Client的server。该server的功能是：接受并调度分发Docker Client发送的请求。
 ![Docker Server架构](https://github.com/HaHaJeff/note/blob/master/docker/book/Docker%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/%E6%9E%B6%E6%9E%84/docker-server%E6%9E%B6%E6%9E%84.png)
-** 需要注意的是：Docker Server的运行在Docker的启动过程中，是靠一个名为“serverapi”的job运行来完成的。原则上，Docker Server的运行是众多job中的一个，但是为了强调Docker Server的重要性以及后续job服务的重要特性，将该“serverapi”的jjob单独抽离出来，理解为Docker Server **
+**需要注意的是：Docker Server的运行在Docker的启动过程中，是靠一个名为“serverapi”的job运行来完成的。原则上，Docker Server的运行是众多job中的一个，但是为了强调Docker Server的重要性以及后续job服务的重要特性，将该“serverapi”的jjob单独抽离出来，理解为Docker Server **
 
 ## Engine
 Engine是Docker架构中的运行引擎，同时也是Docker运行的核心模块。它扮演Docker container存储仓库的角色，并且通过执行job的方式来操纵管理这些容器。
