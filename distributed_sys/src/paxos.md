@@ -28,10 +28,46 @@ acceptor无法直接根据value确定其属于哪一次的proposal
 	- higher numbers拥有更高的优先级；
 - 一种简单的实现方式
 
-![proposal_number](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/proposal_number.png)
+![proposal_numbers](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/proposal_numbers.png)
 
 - 每一个server保存maxRound；
 - 产生一个新的proposal number；
 	- 增加maxRound；
-	- 与server id进行组合；	
+	- 与server id进行组合；
 - proposers必须将maxRound持久化，这样可以保证在重启或宕机之后不会重用以前的number；
+
+## 两阶段协议实现方式：
+- phase 1:  广播prepare RPCs
+	- 确定是否有value已经被选择；
+	- 确认旧的proposals已经完成；
+- phase 2: 广播accept RPCs
+	- 请求acceptos接受一个指定的value；
+### Basic Paxos flow
+![basic_paxos](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/basic_paxos.png)
+
+**Acceptor必须持久化 minProposal(最小的将要被接受的提案), acceptedProposal(已经接受过的提案), acceptedValue(已经接受过的value)**
+
+## Basic Paxos Examples
+1. 已经有value被选择：
+	- proposer将会在phase1发现它并且使用它；	
+
+![basic_paxos_examples](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/basic_paxos_examples.png)
+
+2. 没有value被选择，但是已经有acceptors接受过该value，且s5可以发现它；
+	- proposer将会在phase1发现它并且使用它；	
+	- s1, s2, s3, s4, s5都会成功的完成value 的chose，因为对于value没有发生冲突；
+
+![basic_paxos_examples_cont'd](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/basic_paxos_examples_cont'd.png)
+
+3.  没有value被选择，但是已经有acceptors接受过该value，且s5不可以发现它；
+	- s5发出的提案可以被选择，因为proposal number的存在；
+	- s1的proposal将会失败；
+	- 
+![basic_paxos_examples_cont'd_2](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/basic_paxos_examples_cont'd_2.png)
+
+## liveness(活锁)
+
+![liveness](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/liveness.png)
+
+- 解决方案1：出现冲突的时候，在重新开始算法执行流程之前，随机的延迟；**让其他proposes有机会完成value的确认**
+- 解决方案2：multi-paxos会使用leader来避免活锁；
