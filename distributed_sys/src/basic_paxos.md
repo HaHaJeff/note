@@ -71,3 +71,7 @@ acceptor无法直接根据value确定其属于哪一次的proposal
 
 - 解决方案1：出现冲突的时候，在重新开始算法执行流程之前，随机的延迟；**让其他proposes有机会完成value的确认**
 - 解决方案2：multi-paxos会使用leader来避免活锁；
+
+## Paxos中值得注意的：
+- 只有发起proposal的proposer知道哪一个value被选择了；
+- 如果其他proposer想要知道，则必须执行一次paxos算法；
