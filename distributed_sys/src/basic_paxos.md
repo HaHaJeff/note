@@ -75,3 +75,9 @@ acceptor无法直接根据value确定其属于哪一次的proposal
 ## Paxos中值得注意的：
 - 只有发起proposal的proposer知道哪一个value被选择了；
 - 如果其他proposer想要知道，则必须执行一次paxos算法；
+
+参考文献
+[1] [paxos made simple](https://github.com/HaHaJeff/note/blob/master/distributed_sys/doc/Paxos/paxos-simple.pdf)
+[2] [Diego Ongaro的ppt以及视频](https://github.com/HaHaJeff/note/blob/master/distributed_sys/doc/Paxos/paxos.pptx)
+
+**Diego Ongaro：raft作者**
