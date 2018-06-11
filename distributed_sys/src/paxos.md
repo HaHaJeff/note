@@ -28,9 +28,7 @@ acceptor无法直接根据value确定其属于哪一次的proposal
 	- higher numbers拥有更高的优先级；
 - 一种简单的实现方式
 
-<div align=center>
 ![proposal_number](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/proposal_number.png)
-</div>
 
 - 每一个server保存maxRound；
 - 产生一个新的proposal number；
