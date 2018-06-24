@@ -1,4 +1,4 @@
-#C++ 11 standard node
+#C++ 11 standard
 
 ##关于std::remove_if的一个bug(准确来说不应该是bug，而是不理解c++标准对于Predicate的定义)
 ``` cpp
