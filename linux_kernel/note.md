@@ -31,7 +31,7 @@ void wake_up(wait_queue_head_t *q) {
 
 Nginx提出了一种优秀的解决方案：多个进程都在epoll_wait，但是都没有accept的权利，只有得到accept_mutex的进程才有权力进行accept操作，从而将该文件描述符加入到自己的epollfd中；
 
-# switch_to宏
+#switch_to宏
 为什么switch_to宏需要三个参数
 - prev：指向当前进程描述符地址；
 - next：指向下一个进程描述符的地址；
@@ -50,4 +50,4 @@ Nginx提出了一种优秀的解决方案：多个进程都在epoll_wait，但�
 |prev|A|B|C|
 |next|B|C|A|
 假设现在进程A与进程B发生了切换，于是B进程得到了运行，但是如果进程B想切换回A该怎么办，next现在对于进程B的上下文来说是C，而prev只能指向B，**从而引出了第三个参数last**，last用以保存上一次运行的进程描述符地址；所以，对于进程A调度进程B而言，switch_to(A,B,A)，第三个参数用以传递进程A的描述符地址到进程B的堆栈中。
-
+局
