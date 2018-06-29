@@ -149,3 +149,173 @@ string s = "\\w\\\\w";
 ```
 string s = R"(\w\\w)"
 ```
+
+- 关键字 constexpr
+
+自c++11起，constexpr可用来让表达式核定于编译器。例如：
+```
+constexpr int square(int x)
+{
+	return x * x;
+}
+float a[square(9)];
+```
+
+- 崭新的Tempate特性
+自c++11起，template可以拥有"得以接受个数不定的template实参"的参数。
+```
+void print()
+{
+}
+
+template <typename T, typename... Types>
+void print(const T& firstArg, const Types&... args)
+{
+	std::cout << firstArg << std::endl;
+	print(args);
+}
+```
+**Alias Template(带别名的模板，或者叫Template Typedef)**
+自c++11起，支持template type definition。然而由于关键字typename用于此处时总是处于某种原因而失败，所以引入关键字using：
+```
+template <typename T>
+using Vec = std::vector<T, MyAlloc<T>>;
+Vec<int> coll
+```
+上述等价于：
+```
+std::vector<int, MyAlloc<int>> coll
+```
+
+- lambda
+语法：
+```
+[] {
+	std::cout << "hello lambda" << std::endl;
+};
+```
+直接调用：
+```
+[] {
+	std::cout << "hello lambad" << std::endl; 
+}();
+```
+或是将它传递给对象：
+```
+auto l = [] {
+	std::cout << "hello lambad" << std::endl; 
+};
+l();
+```
+使用参数的lambda：
+```
+auto l = [](const std::string& str) {
+	std::cout << str << std::endl; 
+};
+l("hello");
+```
+**值得注意的是：lambda不可以是template**
+使用返回类型的lambda：
+```
+[]()->double {
+	return 43.0;
+}
+```
+**double不一定需要指定，该返回类型会根据返回值自动被推导出来**
+访问外部作用域：
+1. [=]意味着外部作用域以by value方式传递给lambda。
+2. [&]意味着外部作用域以by reference方式传递给lambda。
+```
+int x = 0;
+int y = 42;
+auto q = [x, &y] {
+	std::cout << "x" << x << std::endl;
+	std::cout << "y" << y << std::endl;
+	++y; //OK
+};
+x = y = 77;
+q();
+q();
+std::cout << "final y: " << y << std::endl;
+```
+输出：
+```
+//第一次q()
+x: 0
+y: 77
+//第二次q()
+x: 0
+y: 78
+final y: 79
+```
+**由于x是by value而获得一份拷贝，在lambda中你可以读取它，但是++x是不被允许的。y以by reference传递，所以你可以对y进行改写**
+by value和by reference的混合体
+```
+int id = 0;
+auto f = [id]()mutable{
+	std::cout << "id: " << id << std::endl;
+	++id; //OK
+};
+
+id = 42;
+f();
+f();
+f();
+std::cotu << id << std::endl;
+```
+输出：
+```
+//第一次调用f()
+id: 0
+//第二次调用f()
+id: 1
+//第三次调用f()
+id: 2
+42
+```
+上述功能可以理解为：
+```
+class {
+private:
+	int id;
+public:
+	void operator() () {
+		std::cout << "id: " << id << std::endl;
+		++id; //OK
+	}
+};
+```
+
+**lambda的类型**
+lambda的类型，是个不具名function object。每个lambda表达式的类型是独一无二的。因此，如果想要根据该类型声明对象，可借助于template或auto。如果需要以该类型作为函数参数，则可以使用decltype关键字，例如把一个lambda作为hash function或ordering准则或sorting准则传给容器。
+```
+std::function<int(int, int)>> returnLambda() {
+	return [](int x, int y) {
+		return x*y;
+	};
+}
+int main()
+{
+	auto lf = returnLambda();
+	std::cout << lf(6, 7) << std::endl;
+}
+```
+
+- 关键字decltype
+关键字decltype可以让编译器找出表达式类型，这其实就是typeof的特性体现：
+```
+std::map<std::string, float> coll;
+decltype(coll)::value_type elem;
+```
+
+- 新的函数声明语法
+有时候，函数的返回类型取决于某个表达式对实参的处理。然而类似：
+```
+template <typename T1, typename T2>
+decltype(x+y) add(T1 x, T2 y)
+```
+在c++11之前是不可能的，因为返回式所使用的对象尚未被引用，但是在c++11：
+```
+template <typename T1, typename T2>
+auto add(T1 x, T2 y) -> decltype(x+y)
+```
