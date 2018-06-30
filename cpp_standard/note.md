@@ -319,3 +319,77 @@ decltype(x+y) add(T1 x, T2 y)
 template <typename T1, typename T2>
 auto add(T1 x, T2 y) -> decltype(x+y)
 ```
+
+- 新的基础类型
+1. char16_t和char32_t;
+2. long long和unsigned int;
+3. std::nullptr_t;
+
+#随旧犹新的语言提特性
+
+- Nontype Template Parameter(非类型模板参数)
+```
+bitset<32> flags32;
+bitset<50> flags50
+```
+
+- Default Tempate Parameter
+```
+template <typename T, typename container = vector<T>>
+class MyClass;
+
+//可以只传入一个参数
+MyClass<int> x1;
+```
+
+-Member Tempate
+Class的成员函数可以是template，然后不能是virtual函数(template在编译时转换，virtual运行时绑定，矛盾)
+```
+tempalte<T>
+class MyClass {
+
+	template <typebane T>
+	void f(T);
+};
+```
+**考虑下面一个例子**
+```
+template <typename T>
+clss MyClass {
+public:
+	T value;
+public:
+	void assign(const MyClass<T>& x) {
+		value = x.value;
+	}
+};
+
+void f()
+{
+	MyClass<double> d;
+	MyClass<int>    i;
+	d.assign(d); //OK
+	d.assign(i); //ERROR  参数类型不匹配
+}
+```
+**解决方案**
+```
+template <typename T>
+clss MyClass {
+public:
+	T value;
+public:
+	template<typename X>
+	void assign(const MyClass<X>& x) {
+		value = x.value;
+	}
+};
+
+void f()
+{
+	MyClass<double> d;
+	MyClass<int>    i;
+	d.assign(d); //OK
+	d.assign(i); //OK  double可以转成int
+}
+```
