@@ -441,3 +441,27 @@ void f()
 }
 ```
 该语法叫做：zero initialized
+
+
+# Smart Pointer
+
+- shared_ptr
+shared_ptr的构造函数是explicit
+```
+std::shared_ptr<string> p = new string("asd"); //ERROR
+std::shared_ptr<string> p{ new string("asd")}; //OK
+```
+
+**需要注意的是shared_ptr不支持指向数组**
+```
+std::shared_ptr<int> p(new int[10]);  //OK when compile, but error in deconstruct, memory lack
+//因为shared_ptr的默认deleter是 delete，所以无法完成数组的析构
+
+std::shared_ptr<int> p(new int[10], [](int *p){delete []p;}); //OK in compile and deconstruct
+//但是通过shared_ptr访问数组去不方便，因为shared_ptr没有重载[]
+//访问数组：p.get()[index]
+std::shared_ptr<int[]> p(new int[10]) //ERROR 因为shared_ptr没有数组类型模板参数
+
+std::unique_ptr<int[]> s(new int[10]) // OK unique_ptr支持数组类型，且unique_ptr的deleter支持[]，并且unique_ptr对于[]类型还重载了[]操作符；
+```
+
