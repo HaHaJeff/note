@@ -1,6 +1,6 @@
-#C++ 11 standard
+# C++ 11 standard
 
-##关于std::remove_if的一个bug(准确来说不应该是bug，而是不理解c++标准对于Predicate的定义)
+## 关于std::remove_if的一个bug(准确来说不应该是bug，而是不理解c++标准对于Predicate的定义)
 ``` cpp
 class Nth {
   private:
@@ -26,13 +26,13 @@ int main()
   PRINT_ELEMENTS(coll, "coll:   ");
 }
 ```
-**Result**
+**Result **
 ``` bash
 coll:   1 2 3 4 5 6 7 8 9 10 
 coll:   1 2 4 5 7 8 9 10 
 ```
 
-**Reason**
+**Reason **
 ```
   //参数列表对应的__pred即为Nth(3)，为值传递
   template<typename _ForwardIterator, typename _Predicate>
@@ -65,7 +65,7 @@ coll:   1 2 4 5 7 8 9 10
 ```
 **remove_if有两次关于__pred的调用，第一次调用为find_if操作找到3，然后再for循环中再次对__pred进行调用，对应Nth(3)，由于find_if是值传递，所以count没有发生变化，于是再次找到6**
 
-##c++11新特性
+## c++11新特性
 - Template表达式内的空格
 ```
 vector<list<int> > //OK in each c++ version
@@ -83,29 +83,36 @@ nullptr是个新关键字。它被自动转换为各种pointer类型，但不会
 ```
 
 - 一致性初始化与初值列
-···
+
+```
 int values[] {1, 2, 3};
 std::vector<int> v{2,3,4,5};
 std::vector<std::string> cities {
 "a", "b", "c"
 };
 std::complex<double> c{4.6, 3.0};
-···
+```
+
 **初值列**会强迫造成所谓的**value initialization**，意思是某个local变量属于某种基础类型(通常不会被初始化)也会被初始化为0(nullptr):
+
 ```
 int i;    // i undefined value
 int j{};  // j is initialized by 0
 int *p;   // p undefined value
 int *q{}; // q is initialized by nullptr
 ```
+
 **窄化对大括号不成立：**
+
 ```
 int x1(1.1)   // OK x1 become 1
 int x2{1.1}   // ERROR
 char c1{7};   // OK even though 7 is an int, 但是不会发生窄化
 char c2{277}; // ERROR 发生了窄化 因为277超过char的最大值
 ```
+
 **std::initializer_list<int> value**
+
 ```
 void Print(std::initializer_list<int> value) {
 	for (auto p = value.begin(); p != value.end(); ++p) {
@@ -115,6 +122,7 @@ void Print(std::initializer_list<int> value) {
 ```
 
 - Range-Based for循环
+- 
 ```
 for (int i: {1,2,3,4,5}) {
 	std::cout << i << std::endl;
@@ -123,6 +131,7 @@ for (int i: {1,2,3,4,5}) {
 
 - Move语义和Rvalue Reference
 该特性的主要目标：**避免非必要拷贝和临时对象**
+
 ```
 void CreateAndInsert(std::set<X>& coll)
 {
@@ -133,6 +142,7 @@ void CreateAndInsert(std::set<X>& coll)
 	coll.insert(x);   //3
 }
 ```
+
 1. 对于注释1而言，使用copy插入是有意义的，因为x对象在以后用到了；
 2. 对于注释2而言，**x+x** 产生一个临时对象，此时使用copy构造会产生额外的开销；
 3. 对于注释3而言，**x** 这个局部对象已经无用了，所以使用copy构造也会产生额外的开销0。
@@ -163,6 +173,7 @@ float a[square(9)];
 
 - 崭新的Tempate特性
 自c++11起，template可以拥有"得以接受个数不定的template实参"的参数。
+
 ```
 void print()
 {
@@ -177,36 +188,43 @@ void print(const T& firstArg, const Types&... args)
 ```
 **Alias Template(带别名的模板，或者叫Template Typedef)**
 自c++11起，支持template type definition。然而由于关键字typename用于此处时总是处于某种原因而失败，所以引入关键字using：
+
 ```
 template <typename T>
 using Vec = std::vector<T, MyAlloc<T>>;
 Vec<int> coll
 ```
 上述等价于：
+
 ```
 std::vector<int, MyAlloc<int>> coll
 ```
 
 - lambda
 语法：
+
 ```
 [] {
 	std::cout << "hello lambda" << std::endl;
 };
 ```
+
 直接调用：
+
 ```
 [] {
 	std::cout << "hello lambad" << std::endl; 
 }();
 ```
 或是将它传递给对象：
+
 ```
 auto l = [] {
 	std::cout << "hello lambad" << std::endl; 
 };
 l();
 ```
+
 使用参数的lambda：
 ```
 auto l = [](const std::string& str) {
@@ -214,8 +232,10 @@ auto l = [](const std::string& str) {
 };
 l("hello");
 ```
+
 **值得注意的是：lambda不可以是template**
 使用返回类型的lambda：
+
 ```
 []()->double {
 	return 43.0;
@@ -225,6 +245,7 @@ l("hello");
 访问外部作用域：
 1. [=]意味着外部作用域以by value方式传递给lambda。
 2. [&]意味着外部作用域以by reference方式传递给lambda。
+
 ```
 int x = 0;
 int y = 42;
@@ -238,6 +259,7 @@ q();
 q();
 std::cout << "final y: " << y << std::endl;
 ```
+
 输出：
 ```
 //第一次q()
@@ -248,8 +270,10 @@ x: 0
 y: 78
 final y: 79
 ```
+
 **由于x是by value而获得一份拷贝，在lambda中你可以读取它，但是++x是不被允许的。y以by reference传递，所以你可以对y进行改写**
 by value和by reference的混合体
+
 ```
 int id = 0;
 auto f = [id]()mutable{
@@ -302,6 +326,7 @@ int main()
 ```
 
 - 关键字decltype
+
 关键字decltype可以让编译器找出表达式类型，这其实就是typeof的特性体现：
 ```
 std::map<std::string, float> coll;
@@ -310,6 +335,7 @@ decltype(coll)::value_type elem;
 
 - 新的函数声明语法
 有时候，函数的返回类型取决于某个表达式对实参的处理。然而类似：
+
 ```
 template <typename T1, typename T2>
 decltype(x+y) add(T1 x, T2 y)
@@ -321,11 +347,12 @@ auto add(T1 x, T2 y) -> decltype(x+y)
 ```
 
 - 新的基础类型
+
 1. char16_t和char32_t;
 2. long long和unsigned int;
 3. std::nullptr_t;
 
-#随旧犹新的语言提特性
+# 随旧犹新的语言提特性
 
 - Nontype Template Parameter(非类型模板参数)
 ```
@@ -352,7 +379,9 @@ class MyClass {
 	void f(T);
 };
 ```
+
 **考虑下面一个例子**
+
 ```
 template <typename T>
 clss MyClass {
@@ -372,6 +401,7 @@ void f()
 	d.assign(i); //ERROR  参数类型不匹配
 }
 ```
+
 **解决方案**
 ```
 template <typename T>
@@ -393,3 +423,21 @@ void f()
 	d.assign(i); //OK  double可以转成int
 }
 ```
+
+- 基础类型的明确初始化
+
+如果使用"一个明确的构造函数调用，但不给实参"这样的语法，基础类型会被设定初值为0：
+```
+int i1;   		//undefined value
+int i2 = int(); //initialized with zero
+int i3{};		//initialized with zero(c++11)
+```
+这个特性使得我们可以写出"确保无论任何类型，其值都有一个确凿的默认值"的template code。例如下面的函数中，初始化机制保证了"x如果是基础类型，会被初始化为0"：
+```
+template <typename T>
+void f()
+{
+	T x = T();
+}
+```
+该语法叫做：zero initialized
