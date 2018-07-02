@@ -234,6 +234,7 @@ l("hello");
 ```
 
 **值得注意的是：lambda不可以是template**
+
 使用返回类型的lambda：
 
 ```
@@ -242,6 +243,7 @@ l("hello");
 }
 ```
 **double不一定需要指定，该返回类型会根据返回值自动被推导出来**
+
 访问外部作用域：
 1. [=]意味着外部作用域以by value方式传递给lambda。
 2. [&]意味着外部作用域以by reference方式传递给lambda。
@@ -272,6 +274,7 @@ final y: 79
 ```
 
 **由于x是by value而获得一份拷贝，在lambda中你可以读取它，但是++x是不被允许的。y以by reference传递，所以你可以对y进行改写**
+
 by value和by reference的混合体
 
 ```
@@ -311,7 +314,9 @@ public:
 ```
 
 **lambda的类型**
+
 lambda的类型，是个不具名function object。每个lambda表达式的类型是独一无二的。因此，如果想要根据该类型声明对象，可借助于template或auto。如果需要以该类型作为函数参数，则可以使用decltype关键字，例如把一个lambda作为hash function或ordering准则或sorting准则传给容器。
+
 ```
 std::function<int(int, int)>> returnLambda() {
 	return [](int x, int y) {
@@ -403,6 +408,7 @@ void f()
 ```
 
 **解决方案**
+
 ```
 template <typename T>
 clss MyClass {
@@ -453,6 +459,7 @@ std::shared_ptr<string> p{ new string("asd")}; //OK
 ```
 
 **需要注意的是shared_ptr不支持指向数组**
+
 ```
 std::shared_ptr<int> p(new int[10]);  //OK when compile, but error in deconstruct, memory lack
 //因为shared_ptr的默认deleter是 delete，所以无法完成数组的析构
