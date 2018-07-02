@@ -465,3 +465,11 @@ std::shared_ptr<int[]> p(new int[10]) //ERROR 因为shared_ptr没有数组类型
 std::unique_ptr<int[]> s(new int[10]) // OK unique_ptr支持数组类型，且unique_ptr的deleter支持[]，并且unique_ptr对于[]类型还重载了[]操作符；
 ```
 
+**shared_ptr只提供operator*和operator->，指针运算和operator[]都未提供，因此，如果想访问内存，必须使用get()获得被shared_ptr报过的内部指针**
+
+- class weak_ptr
+错误的使用shared_ptr会发生资源泄露：
+1. cyclic reference(环式指向)，如果两对象使用shared_ptr互相指向对方，即使不存在其他reference指向它们时，资源也不会释放；
+通过class weak_ptr，可以避免环式指向的发生
+**weak_ptr的语义：共享但不拥有，需要注意的是：weak_ptr不提供operator*和operator->**
+
