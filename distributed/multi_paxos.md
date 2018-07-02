@@ -12,7 +12,7 @@ Basic Paxos完成一个value的确认，Multi Paxos完成多个值的确认。Mu
 	- 判断phase1阶段的返回值；
 		- 如果返回值中的acceptedValue != null，对该acceptedValue完成basic paxos余下流程，完成后重新选择一个没有被确认的日志项；
 		- 否则，完成该日志项的basic paxos余下的算法流程；
-![select log entries](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/select_log_entrues.png)
+![select log entries](https://github.com/HaHaJeff/note/blob/master/distributed/image/select_log_entrues.png)
 
 **红线表示s3处于offline**
 
@@ -70,7 +70,7 @@ lamport提出了一种简单的方式：
 		- 同时 accptedProposal[i] == request.proposal
 	-	结果：大多数被选择的value被所有服务器知道
 
-![full_disclosure](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/full_disclosure.png)
+![full_disclosure](https://github.com/HaHaJeff/note/blob/master/distributed/image/full_disclosure.png)
 
 **为什么要求 i < request.firstUnchosenIndex && acceptedProposal[i] == request.proposal?**
 - i < request.firstUnchosenIndex表明proposer中小于firstUnchosenIndex的proposal已经被确定了；
@@ -123,7 +123,7 @@ lamport提出了一种简单的方式：
 	- 替换失效的机器；
 	- 改变副本数目；
 
-![configuration_changes](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/configuration_changes.png)
+![configuration_changes](https://github.com/HaHaJeff/note/blob/master/distributed/image/configuration_changes.png)
 
 如上图所示的配置变化
 - 旧的配置是前三台机器；
@@ -136,7 +136,7 @@ lamport提出了一种简单的方式：
 	- 对该日志项进行备份(和普通日志项一样)；
 	- state machine执行该日志项的时候当且仅当该日志项的前a个日志项全部执行执行完，这样就能保证一致性；
 
-![configuration_change_cont'd](https://github.com/HaHaJeff/note/blob/master/distributed_sys/image/congiguration_changes_cont'd.png)
+![configuration_change_cont'd](https://github.com/HaHaJeff/note/blob/master/distributed/image/congiguration_changes_cont'd.png)
 
 如上图一样，假设a=3，且在日志项1和日志项3都发生了配置变化
 - 对于日志项1而言，state machine执行该配置变化C1必须在日志项4之后，所以对于日志项1，2，3而言，使用的配置都是C0；
