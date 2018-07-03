@@ -480,3 +480,143 @@ std::unique_ptr<int[]> s(new int[10]) // OK unique_ptr支持数组类型，且un
 通过class weak_ptr，可以避免环式指向的发生
 **weak_ptr的语义：共享但不拥有，需要注意的是：weak_ptr不提供operator*和operator->**
 
+- 确保某对象只被一组shared_pointer 拥有
+
+```
+int *p = new int;
+std::shared_ptr<int> sp1(p);
+std::shared_ptr<int> sp2(p);
+```
+问题出现在释放的时候，会产生重复释放
+
+然而问题也可能间接发生：
+```
+class Person {
+public:
+	void SeParentAndTheirKids(std::shared_ptr<Person> m = nullptr,
+							  std::shared_ptr<Person> f = nullptr) {
+		mother = m;
+		father = f;
+		if (m != nullptr) {
+			m->kids.push_back(std::shared_ptr<Person>(this));  //ERROR
+		}
+		if (f != nullptr) {
+			f->kids.push_back(std::shared_ptr<Person>(this));  //ERROR
+		}
+	}
+};
+```
+问题出在this指针，c++标准库提供了一个选项：
+```
+std::enable_shared_from_this<typename T>;
+```
+
+```
+class Person : public std::enable_shared_from_this<Person> {
+public:
+	void SeParentAndTheirKids(std::shared_ptr<Person> m = nullptr,
+							  std::shared_ptr<Person> f = nullptr) {
+		mother = m;
+		father = f;
+		if (m != nullptr) {
+			m->kids.push_back(std::shared_ptr<Person>(this));  //OK
+		}
+		if (f != nullptr) {
+			f->kids.push_back(std::shared_ptr<Person>(this));  //OK
+		}
+	}
+};
+```
+
+**注意，在构造函数中使用该抽象基类提供的语义会产生运行时错误！**
+
+- unique_ptr
+
+语义：unique_ptr是"其所指向变量"的唯一拥有者
+
+```
+std::unique_ptr<int> up = new int();  //ERROR  explicit
+
+std::string string* sp = new std::string("hello");
+std::unique_ptr<std::string> up1(sp);
+std::unique_ptr<std::string> up2(sp);  //ERROR  not in compile, but in runtime
+```
+
+**转移unique_ptr的拥有权**
+
+```
+std::string string* sp = new std::string("hello");
+std::unique_ptr<std::string> up1(sp);
+std::unique_ptr<std::string> up2(up1); //ERROR in compile
+std::unique_ptr<std::string> up3(std::move(sp1)); //OK 
+```
+
+拥有权的转移指出了unique_ptr的一种用途：函数可利用它们将拥有权转移给其他函数：
+
+1. 函数是接收端。如果我们将一个由std::move()建立起来的unique_ptr以rvalue reference身份当作函数实参，那么被调用函数的参数将会取得unique_ptr的拥有权。因此，如果该函数不再转移拥有权，对象会再函数结束时被deleted：
+
+```
+void sink(std::unique_ptr<ClassA> up) {
+...
+}
+
+std::unique_ptr<ClassA> up(new ClassA);
+
+...
+
+sink(std::move(up));  //up失去了拥有权
+```
+
+2.  函数是供应端。当函数返回一个unique_ptr，其拥有权会转移至调用端场景内：
+
+```
+std::unique_ptr<ClassA> source()
+{
+	std::unique_prt<ClassA> ptr(new ClassA);
+	...
+	return ptr;
+}
+
+void g() 
+{
+	std::unique_ptr<ClassA> p;
+	for(int i = 0; i < 10; i++) {
+		p = source();
+		...
+	}
+}
+```
+每当source()被调用，就会以new创建对象并返回给调用者，夹带着其所有权。返回值被赋值给p，于是拥有权也被转移给p。在循环的第二次迭代中，对p赋值导致p先前拥有的对象被删除。一旦g()结束，p被销毁，导致最后一个由p所拥有的对象被析构。无论如何都不会发生资源泄露。即使抛出异常，unique_ptr也能确保数据被删除。
+
+**source的return语句不必使用move语义，c++11规定，编译器应该自动尝试加上move()**
+
+**关于这点的应用可以在grpc中看到，name.grpc.h中的NewStub函数的返回值就是unique_ptr类型**
+
+- Smart Pointer结语
+
+1. shared_ptr用来共享拥有权；
+2. unique_ptr用来独占拥有权；
+
+**为什么c++标准库不是只提供一个带有"分享拥有权"语义的smart pointer class？**，因为这也可以避免资源泄露或拥有权转移。
+
+**答案：因为shared_ptr带来的效能冲击！**
+
+```
+template <class T, class D = default_delete<T>>  //所以为unique_ptr定义deleter必须指定deleter类型，这样做的好处是可以使用空基类优化，当不给顶D时，deleter不占用空间；
+class unique_ptr {
+public:
+    ...
+    unique_ptr (pointer p,
+        typename conditional<is_reference<D>::value,D,const D&> del) noexcept;
+    ...
+};
+
+template <class T> 
+class shared_ptr {
+public:
+    ...
+    template <class U, class D> 
+    shared_ptr (U* p, D del);
+    ...
+};
+```
