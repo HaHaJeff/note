@@ -599,7 +599,7 @@ void g()
 
 **为什么c++标准库不是只提供一个带有"分享拥有权"语义的smart pointer class？**，因为这也可以避免资源泄露或拥有权转移。
 
-**答案：因为shared_ptr带来的效能冲击！**
+**答案：因为shared_ptr带来的效能冲击！无法使用比如空基类优化等措施**
 
 ```
 template <class T, class D = default_delete<T>>  //所以为unique_ptr定义deleter必须指定deleter类型，这样做的好处是可以使用空基类优化，当不给顶D时，deleter不占用空间；
