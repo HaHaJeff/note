@@ -147,3 +147,117 @@ public:
     }
 };
 ```
+
+- 给定一个数组和一个目标数字，在数组中找到a，b，c，d四个元素，使得a + b  + c + d = target，找到所有的情况
+```
+//Input: [1, 0, -1, 0, -2, 2] target: 0
+//Output:
+//[
+// [-1, 0, 0, 1],
+// [-2, -1, 1, 2],
+// [-2, 0, 0, 2]
+//]
+class Solution {
+  public:
+    vector<vector<int>> fourSum(vector<int>& nums, int target) {
+      vector<vector<int>> ret;
+      int size = nums.size();
+      int first = 0, second = 1, third = 2, four = size - 1;
+      int current = target;
+      sort(nums.begin(), nums.end());
+      for (; first < size - 3 ; first++) {
+        current -= nums[first];
+        for (second = first + 1; second < size - 2; second++) {
+          current -= nums[second];
+          third = second + 1;
+          four = size - 1;
+          while(third < four) {
+            if (nums[third] + nums[four] < current) third++;
+            else if (nums[third] + nums[four] > current) four--;
+            else {
+              ret.push_back({nums[first], nums[second], nums[third], nums[four]});
+              four--;
+              while (four <= size - 1 && nums[four] == nums[four+1]) four--;
+              while (third <= four && nums[third] == nums[third+1]) third++;
+            }
+          }
+          current += nums[second];
+          while (second <= third && nums[second] == nums[second+1]) second++;
+        }
+        current += nums[first];
+        while (first <= second && nums[first] == nums[first+1]) first++;
+      }
+
+      return move(ret);
+    }
+};
+```
+
+- 给定一个仅包含'('和')'的字符串，找到最长有效的字符串
+```
+//Input: "(()"
+//Output: 2
+//Explanation: valid substring is "()"
+//Input: ")()())"
+//Output: 4
+//Explanation: valid substring is "()()"
+
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int size = s.size(), max = 0, sum = 0;
+        for (int i = 0; i < size; i++) {
+            if (s[i] == ')') continue;
+            sum = 1;
+            for (int j = i+1; j < size;j++) {
+                if (s[j] == '(') sum +=1;
+                else sum -= 1;
+                
+                if (sum == 0) {
+                    max = max > (j-i+1) ? max : (j-i+1);
+                    if (j+1<size && s[j+1] != '(') {
+                        i = j;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return max;
+    }
+};
+```
+
+- 给定一个排序数组和一个目标值，如果目标值在数组中出现，返回其下标，如果没有，返回目标值应该插入的位置
+```
+//Input: [1, 3, 5, 6] target: 5
+//Output: 2
+//Input: [1, 3, 5, 6] target: 2
+//Output: 1
+//Input: [1,3, 5, 6] target: 7
+//Output: 4
+//Input: [1,3, 5, 6] target: 0
+//Output: 0
+
+//二分查找
+class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+    
+        if (target <= nums[0]) return 0;
+        int size = nums.size();
+        if (target > nums[size-1]) return size;
+        if (target == nums[size-1]) return size-1;
+        int first = 0, last = size - 1, middle = 0;
+        while (first <= last) {
+            middle = (first+last+1)>>1;
+            if (nums[middle] < target) first = middle+1;
+            else last = middle-1;                      
+        }
+        return first;
+        
+        //return lower_bound(nums.begin(), nums.end(), target) - nums.begin();
+    }
+};
+```
+
