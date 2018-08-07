@@ -1,4 +1,52 @@
 # C++ 11 standard
+## Storage class specifiers
+- registe: 用于具有块作用域的变量或函数参数
+- static: 用于变量、函数、匿名unions，(函数参数不能是static)
+- thread_local: 用于namespace内的变量(包含全局变量)、块作用域内的变量(此时默认为带有static属性，但是没有静态生存期，不存在与data或bss中)、文件静态变量、静态成员变量。(thread_local变量的存储位置)
+- extern: 用于变量、函数。不能用于声明类成员或者函数参数
+- mutable: 用于类成员变量，不能够用于const、static、引用。
+```
+class X {
+	mutable const int* a; //OK   可以作为左值
+	mutable int const* b; //ERROR 不可以作为左值
+	mutable static int c; //ERROR
+	mutable int& d;       //ERROR
+};
+```
+
+```
+static char* f() // internal linkage
+char* f()        // still internal linkage
+
+char* g();       // external linkage
+static char* g() // error: inconsistent linkage
+
+void h();
+inline void h(); // external linkage
+
+inline void l();
+void l(); // external linkage
+
+inline void m();
+extern void m(); // external linkage
+
+static void n();
+inline void n(); // internal linkage
+
+static int a; // a has internal linkage
+int a; // error: two definitions
+
+static int b; // b has internal linkage
+extern int b; // b still has internal linkage
+
+int c; // c has external linkage
+static int c; // error: inconsistent linkage
+
+extern int d; // d has external linkage
+static int d; // error: inconsistent linkage
+
+```
+
 
 ## 关于std::remove_if的一个bug(准确来说不应该是bug，而是不理解c++标准对于Predicate的定义)
 ``` cpp
