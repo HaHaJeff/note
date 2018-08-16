@@ -50,7 +50,7 @@ lamport提出了一种简单的方式：
 		- 让proposal number对每个日志项都有效，而不是仅仅对一个日志项有效；
 	- 发现可能已经被选择的value：
 		- 返回当前日志项已经接受的最高proposal；
-		- 返回 noMoreAccepted：没有接受过比当前日志项的index小的日志项；
+		- 返回 noMoreAccepted：没有接受过比当前日志项的index大的日志项；
 - 如果acceptor对proposer的prepare回应noMoreAccepted，则对于该acceptor可以跳过prepare(直到accept操作被拒绝，说明此时有其他leader进行了提交，且propoasl number大于目前的proposla number)；
 - 一旦leader收到了多数派acceptors的noMoreAccepted，则以后将不需要prepare RPC；
 
