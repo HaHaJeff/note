@@ -1,4 +1,10 @@
 - 给定一个整形数组和一个目标值，返回数组中两数相加的的数字索引。(假定输入数组中数字不重复且输出唯一)
+
+**思路：将每次遍历的值记录下来，下一次遍历到当前值的时候直接查找target-nums[i]是否已经在记录中出现过即可**
+
+例如2 5 7 9, target = 7
+
+遍历２的时候，查找是否出现过7-2，如果有，直接返回，否则记录２,以此类推
 ```
 //Input: [2 5 7 9]  target = 7
 //Output: [0 1]
@@ -67,6 +73,9 @@ public:
 ```
 
 - 给定一个字符串，找到其中非重复字符的最长子串
+
+**思路：只要当前字符出现过，则改变当前字符串的start**
+
 ```
 //Input1: "abcabcbb" Output1: "abc"
 //Input2: "bbbbbbb"  Output2: "b"
@@ -92,8 +101,10 @@ public:
 ```
 
 - 给定n个非负整数：a1,a2,...an,每一个整数表示了一个坐标点(i, ai).每一个点可以画一天垂直的线，找到两条线，这两条线构成的容器能够装最多的水；
+
+**思路：装水容器需要满足木桶原理，加速算法的关键在于最大限度的排除不可能的情况**
+
 ```
-//装水容器需要满足木桶原理，加速算法的关键在于最大限度的排除不可能的情况
 class Solution {
 public:
     int maxArea(vector<int>& height) {
@@ -114,6 +125,9 @@ public:
 ```
 
 - 给定一个包含n个整数的数组和一个整数，在数组中找到3个数字使得这三个数字的和最接近target
+
+**思路：先排序，利用首尾指针减少时间复杂度,其实和数组找两数之和道理一样**
+
 ```
 //Input: [-1, 2, 1, -4] target: 1
 //最接近1的三数之和是2. (-1 + 2 + 1 = 2)
@@ -292,5 +306,57 @@ public:
 		}
 		return longest_str;
 	}
+};
+```
+
+- 中序后序重建二叉树
+```
+/**
+* Definition for a binary tree node.
+* struct TreeNode {
+*     int val;
+*     TreeNode *left;
+*     TreeNode *right;
+*     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+* };
+*/
+class Solution {
+public:
+	TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
+		if (inorder.empty() || postorder.empty()) return nullptr;
+
+		inorder_ = inorder;
+		postorder_ = postorder;
+		int i = postorder_.size() - 1;
+		TreeNode* root = recur(i, 0, inorder_.size() - 1, 0, postorder_.size()-1);
+		return root;
+
+	}
+	inline int find_(int start, int end, int val) {
+		int ret = 0;
+		for (int i = start; i <= end; ++i) {
+			if (inorder_[i] == val) {
+				ret = i;
+				break;
+			}
+		}
+		return ret;
+	}
+	//相比中前序中序重建二叉树，中序后序重建需要确定后序遍历中的左右子树   mid-istart表示左子树有多少
+	TreeNode* recur(int& pre_idx, int istart, int iend, int pstart, int pend) {
+		if (istart > iend) {
+			return nullptr;
+		}
+
+		TreeNode* root{ new TreeNode(postorder_[pend]) };
+		int mid = find_(istart, iend, postorder_[pend]);
+
+		root->left = recur(pre_idx, istart, mid - 1, pstart, pstart + mid - istart - 1);
+		root->right = recur(pre_idx, mid + 1, iend, pstart + mid - istart, pend - 1);
+		return root;
+	}
+private:
+	vector<int> inorder_;
+	vector<int> postorder_;
 };
 ```
