@@ -163,6 +163,8 @@ public:
 ```
 
 - 给定一个数组和一个目标数字，在数组中找到a，b，c，d四个元素，使得a + b  + c + d = target，找到所有的情况
+
+**思路： 类似3 sum closest, 只不过需要剔除重复的数字，需要在找到之后用while循环剔除相等的值**
 ```
 //Input: [1, 0, -1, 0, -2, 2] target: 0
 //Output:
@@ -207,7 +209,21 @@ class Solution {
 };
 ```
 
-- 给定一个仅包含'('和')'的字符串，找到最长有效的字符串
+- 动态规划：给定一个仅包含'('和')'的字符串，找到最长有效的字符串
+
+**思路：**
+- **暴力求解: 双层for循环，找寻满足条件的字符串**
+- **动态规划：**
+```
+   ()(())
+   012345
+dp 020024
+if str[i] == ')'
+  if str[i-1] == '(' dp[i] = dp[i-2]+2
+  else if str[i-1] == ')'
+      if str[i-1-dp[i-1]] == '(' dp[i] = dp[i-1]+2+dp[i-1-dp[i-1]-1]**
+```
+
 ```
 //Input: "(()"
 //Output: 2
@@ -238,6 +254,28 @@ public:
         }
         
         return max;
+    }
+};
+
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        const int size = s.size();
+        int dp[size][size] = {};
+        
+        for (int i = 0; i < size-1; i++) {
+            if (s[i] == '(' && s[i+1] == ')') {
+                dp[i][i+1] = i+1-i+1;
+            }
+        }
+        
+        for (int i = 0; i < size - 1; i++) {
+            if (dp[i][i+1] != 0) {
+                for (int j = 1; j < std::min(i, size-1-i-1); j++)
+                if (s[i-j] == '(' && s[i+j] == ')') dp[i-j][i+j] = dp[i-j+1][i+j-1] + 2;
+                else break;
+            }
+        }
     }
 };
 ```
@@ -276,6 +314,9 @@ public:
 ```
 
 - 找出字符串数组中的最长公共前缀，所有字符均为小写字母
+
+**思路：字典树**
+
 ```
 class Solution {
 public:
@@ -359,4 +400,60 @@ private:
 	vector<int> inorder_;
 	vector<int> postorder_;
 };
+```
+
+- 前序中序重建二叉树
+```
+/**
+* Definition for a binary tree node.
+* struct TreeNode {
+*     int val;
+*     TreeNode *left;
+*     TreeNode *right;
+*     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+* };
+*/
+class Solution {
+public:
+	typedef vector<int>::iterator Iter;
+	TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+		if (preorder.empty() || inorder.empty()) return nullptr;
+
+		preorder_ = preorder;
+		inorder_ = inorder;
+
+		int i = 0;
+		TreeNode* root = recur(i, 0, preorder_.size()-1);
+		return root;
+
+	}
+
+	int find_(int start, int end, int val) {
+		int ret = 0;
+		for (int i = start; i <= end; ++i) {
+			if (inorder_[i] == val) {
+				ret = i;
+				break;
+			}
+		}
+		return ret;
+	}
+
+	TreeNode* recur(int& pre_idx, int start, int end) {
+		if (start > end) {
+			return nullptr;
+		}
+
+		TreeNode* root{ new TreeNode(preorder_[pre_idx]) };
+		int mid = find_(start, end, preorder_[pre_idx++]);
+
+		root->left = recur(pre_idx, start, mid - 1);
+		root->right = recur(pre_idx, mid + 1, end);
+		return root;
+	}
+private:
+	vector<int> preorder_;
+	vector<int> inorder_;
+};
+
 ```
